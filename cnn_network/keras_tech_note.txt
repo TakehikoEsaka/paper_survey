@@ -1,0 +1,43 @@
+# kerasには「Sequential」な書き方「Function API」を使った書き方の2通り存在
+
+# tensorboardの使い方
+- model.fit(x=x_train, y=y_train, epochs=2, validation_data=(x_test, y_test), callbacks=[tensorboard_callback])で、
+tesorboard_callbackを指定して使う。但し、他のmodelの実行ファイルと混ざると動かないので注意。
+- 指定したlogディレクトリにlogが生成されてlocalhost:6006から確認できる。
+- modelのtypeはtensorflow.python.keras.engine.sequential.Sequential -> 使える。一方で、keras.engine.sequential.Sequential -> 使えない。
+従って、tensorflowのimportは、
+○ from tensorflow.keras.layers import Flatten
+× from keras.layers import Flatten
+
+- tensorboard --logdir ./logs/fit(ログファイルが入ったパスを指定)
+
+# tensorflow / tensorboardの使い方
+・shapeには、動的shape / 静的shapeの二種類ある。
+・tensorflowの基本的な使い方別でまとめる
+
+* kerasのtensorオブジェクト、layerオブジェクトは似て非なるもの
+参考：https://qiita.com/takurooo/items/f52c3cdad09da07f9d7f
+
+(間違った例)
+inputs = Input((10, ))
+x = K.relu(inputs * 2 + 1)
+x = Dense(64, activation='relu')(x)
+
+(正しい例)
+inputs = Input((10, ))
+x = Lambda(lambda x : K.relu(x * 2 + 1), output_shape = (10, ))(inputs)
+x = Dense(64, activation='relu')(x)
+
+※ 間違った例でも通るが、Model()を実行した時にエラーが起きるので、Lambdaは使う必要がある。
+※ Lambdaの内部ではサンプル数も":"ときちんと指定してあげる必要がある。
+※ output_shape は入出力のShapeが同じ場合は省略できますが、異なる場合は必ず指定
+※ output_shapeがTupleの時はSample次元は指定禁止、Functionの時は指定する必要有
+
+# TIPS
+テンソルオブジェクトと、レイヤーオブジェクト
+input_image = Input(shape=(56, 56, 3)) 　⇒ テンソルオブジェクト
+expand_image = K.image_resize(input_image)　⇒ レイヤーオブジェクト
+
+【テンソルオブジェクト操作】
+・shapeをゲット / listゲット
+input_image.get_shape().as_list()
